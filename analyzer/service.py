@@ -15,7 +15,7 @@ class AnalysisRequest:
     days: int = 30
     limit: int = 25
     order: str = "pubdate"
-    include_hot: bool = True
+    include_hot: bool = False
     llm_config: LLMConfig | None = None
 
 

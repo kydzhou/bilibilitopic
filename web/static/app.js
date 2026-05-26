@@ -145,7 +145,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  setLoading(true, "正在搜索 B 站视频...");
+  setLoading(true, `正在搜索 B 站「${payload.keyword}」...`);
   results.classList.add("hidden");
 
   try {
@@ -178,8 +178,8 @@ form.addEventListener("submit", async (event) => {
 });
 
 function renderResults(data) {
-  resultTitle.textContent = `「${data.keyword}」分析报告`;
-  resultMeta.textContent = `生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 排序 ${data.order}`;
+  resultTitle.textContent = `搜索「${data.keyword}」的分析报告`;
+  resultMeta.textContent = `搜索关键词：${data.keyword} · 生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 排序 ${data.order}`;
   videoCount.textContent = `${data.video_count} 条`;
   reportEl.innerHTML = marked.parse(data.report || "暂无报告");
 

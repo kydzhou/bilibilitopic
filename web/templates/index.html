@@ -14,7 +14,7 @@
       <div class="hero-text">
         <p class="eyebrow">Bilibili Topic Analyzer</p>
         <h1>B站近期话题分析</h1>
-        <p class="subtitle">输入关键词，自动抓取近期视频并由 LLM 生成趋势报告</p>
+        <p class="subtitle">输入搜索关键词，抓取 B 站搜索结果中的近期视频，并由 LLM 生成趋势报告</p>
       </div>
       <div class="hero-badge">Powered by LLM</div>
     </header>
@@ -42,8 +42,9 @@
           </details>
 
           <label class="field">
-            <span>关键词</span>
-            <input id="keyword" name="keyword" type="text" placeholder="例如：AI绘画、原神、考研" required />
+            <span>搜索关键词</span>
+            <input id="keyword" name="keyword" type="text" placeholder="输入要在 B 站搜索的词，如：AI绘画、原神、考研" required />
+            <p class="field-hint">分析将基于 B 站搜索该词得到的视频，与右侧热搜无关。</p>
           </label>
 
           <div class="grid-2">
@@ -67,8 +68,8 @@
               </select>
             </label>
             <label class="field checkbox-field">
-              <input id="include_hot" name="include_hot" type="checkbox" checked />
-              <span>附带 B 站热搜上下文</span>
+              <input id="include_hot" name="include_hot" type="checkbox" />
+              <span>附带全站热搜作背景参考（不改变分析主题）</span>
             </label>
           </div>
 
@@ -83,9 +84,10 @@
 
       <aside class="panel side-panel">
         <div class="panel-head">
-          <h2>B站热搜</h2>
+          <h2>全站热搜</h2>
           <button id="refresh-trending" type="button" class="ghost-btn">刷新</button>
         </div>
+        <p class="side-hint">仅供参考，点击可填入左侧搜索框</p>
         <ul id="trending-list" class="trending-list">
           <li class="muted">加载中...</li>
         </ul>

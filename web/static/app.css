@@ -146,6 +146,12 @@ body {
   line-height: 1.5;
 }
 
+.side-hint {
+  margin: -8px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 input,
 select,
 button {

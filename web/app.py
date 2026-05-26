@@ -17,7 +17,7 @@ from analyzer.llm import make_llm_config
 from analyzer.service import AnalysisRequest, run_analysis, result_to_dict
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.0.3"
 
 
 def normalize_base_path(raw: str) -> str:
@@ -43,7 +43,7 @@ class AnalyzeBody(BaseModel):
     days: int = Field(30, ge=1, le=90)
     limit: int = Field(25, ge=5, le=80)
     order: str = Field("pubdate", pattern="^(pubdate|totalrank|click)$")
-    include_hot: bool = True
+    include_hot: bool = False
     llm: LLMBody
 
 
