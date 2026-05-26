@@ -1,71 +1,55 @@
-# ryuryu.xyz/btopic 部署指南
+# tools.ryuryu.xyz/btopic 部署指南
 
-将 B 站话题分析工具部署到 `https://ryuryu.xyz/btopic`（Ubuntu ECS）。
-
----
-
-## 1. 登录 ECS
-
-```bash
-ssh root@你的ECS公网IP
-```
+将 B 站话题分析工具部署到 `https://tools.ryuryu.xyz/btopic`（与现有程序共存）。
 
 ---
 
-## 2. 安装 Docker（若未安装）
+## 共存说明
 
-```bash
-apt update && apt upgrade -y
-apt install -y git curl
-curl -fsSL https://get.docker.com | sh
-apt install -y docker-compose-plugin nginx
-```
+| 资源 | 现有程序 | 本程序 |
+|------|----------|--------|
+| 域名 | `tools.ryuryu.xyz/` | `tools.ryuryu.xyz/btopic/` |
+| 端口 | `127.0.0.1:8000`（uvicorn） | `127.0.0.1:8001`（Docker） |
+| Nginx | `/etc/nginx/sites-enabled/steam-review` | 在同一文件追加 location |
 
 ---
 
-## 3. 拉取代码
+## 1. 拉取代码
 
 ```bash
-rm -rf /opt/bilibilitopic
-mkdir -p /opt/bilibilitopic
 cd /opt/bilibilitopic
-git clone https://github.com/kydzhou/bilibilitopic.git .
-ls -la docker-compose.yml
+git pull
+# 或首次：
+# git clone https://github.com/kydzhou/bilibilitopic.git /opt/bilibilitopic
 ```
-
-必须能看到 `docker-compose.yml`，否则不要继续。
 
 ---
 
-## 4. 启动 Docker 服务
+## 2. 启动 Docker（使用 8001 端口）
 
 ```bash
 cd /opt/bilibilitopic
 docker compose up -d --build
 docker compose ps
-docker compose logs -f
 ```
 
-本地验证：
+验证：
 
 ```bash
-curl http://127.0.0.1:8000/btopic/api/health
-curl "http://127.0.0.1:8000/btopic/api/trending?limit=3"
+curl http://127.0.0.1:8001/btopic/api/health
 ```
+
+应返回 JSON，而不是 `Not Found`。
 
 ---
 
-## 5. 配置 Nginx（ryuryu.xyz/btopic）
-
-找到 ryuryu.xyz 的 Nginx 配置文件：
+## 3. 配置 Nginx（追加到 steam-review）
 
 ```bash
-ls /etc/nginx/sites-enabled/
-# 常见：default 或 ryuryu.xyz
-nano /etc/nginx/sites-enabled/default
+nano /etc/nginx/sites-enabled/steam-review
 ```
 
-在 `server { server_name ryuryu.xyz ... }` 块内，**追加**以下内容（或直接复制 `deploy/nginx-ryuryu-btopic.conf`）：
+在 `server { server_name tools.ryuryu.xyz; ... }` 块内**追加**（不要删原有配置）：
 
 ```nginx
 location = /btopic {
@@ -73,7 +57,7 @@ location = /btopic {
 }
 
 location /btopic/ {
-    proxy_pass http://127.0.0.1:8000/btopic/;
+    proxy_pass http://127.0.0.1:8001/btopic/;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -85,41 +69,34 @@ location /btopic/ {
 }
 ```
 
-检查并重载：
+或直接复制仓库文件：
+
+```bash
+cat /opt/bilibilitopic/deploy/nginx-tools-btopic.conf
+# 把内容粘贴进 steam-review 的 server 块
+```
+
+重载：
 
 ```bash
 nginx -t && systemctl reload nginx
 ```
 
----
-
-## 6. HTTPS（若已有证书）
-
-如果 ryuryu.xyz 已配置 Certbot SSL，把上面的 `location` 块加到 **443 端口的 server {}** 里，而不是只加在 80 端口。
-
-查看配置：
-
-```bash
-grep -R "server_name ryuryu.xyz" /etc/nginx/sites-enabled/
-```
-
-两个 server 块（80 和 443）都需要 `/btopic/` 反代，或者 80 已自动跳转到 443 则只配 443 即可。
+若已配 HTTPS，80 和 443 的 `tools.ryuryu.xyz` server 块都要加（或只在 443 加，若 80 已跳转到 443）。
 
 ---
 
-## 7. 访问
-
-浏览器打开：
+## 4. 访问
 
 ```
-https://ryuryu.xyz/btopic/
+https://tools.ryuryu.xyz/btopic/
 ```
 
-首次使用在页面顶部填写 LLM 配置（保存在浏览器本地）。
+页面顶部填写 LLM 配置即可使用。
 
 ---
 
-## 8. 更新
+## 5. 更新
 
 ```bash
 cd /opt/bilibilitopic
@@ -129,30 +106,12 @@ docker compose up -d --build
 
 ---
 
-## 常见问题
-
-| 问题 | 原因 / 处理 |
-|------|-------------|
-| `no configuration file provided` | 目录里没有代码，重新 `git clone ... .` |
-| 404 Not Found | Nginx 未配置 `/btopic/`，或 Docker 未设置 `BASE_PATH=/btopic` |
-| 静态资源 404 | 确认访问地址带 `/btopic/` 前缀 |
-| 502 Bad Gateway | `docker compose ps` 看容器是否运行 |
-| 分析超时 | LLM 响应慢，Nginx 已设 300s 超时；检查 ECS 出网 |
-
----
-
-## 一键命令（首次部署）
+## 一键命令
 
 ```bash
-apt update && apt install -y git curl docker-compose-plugin nginx
-curl -fsSL https://get.docker.com | sh
-
-mkdir -p /opt/bilibilitopic && cd /opt/bilibilitopic
-git clone https://github.com/kydzhou/bilibilitopic.git .
-docker compose up -d --build
-
-# 然后手动把 deploy/nginx-ryuryu-btopic.conf 的内容加入 ryuryu.xyz 的 server 块
+cd /opt/bilibilitopic && git pull && docker compose up -d --build
+curl http://127.0.0.1:8001/btopic/api/health
 nginx -t && systemctl reload nginx
 ```
 
-访问：https://ryuryu.xyz/btopic/
+访问：https://tools.ryuryu.xyz/btopic/
