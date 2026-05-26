@@ -1,0 +1,112 @@
+"""OpenAI-compatible LLM analysis."""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+
+from openai import OpenAI
+
+
+@dataclass
+class LLMConfig:
+    api_key: str
+    base_url: str
+    model: str
+
+
+def load_llm_config() -> LLMConfig:
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("未设置 OPENAI_API_KEY，请在 .env 中配置 API Key")
+    return LLMConfig(
+        api_key=api_key,
+        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").strip(),
+        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip(),
+    )
+
+
+ANALYSIS_SYSTEM_PROMPT = """你是一位熟悉 B 站生态的中文内容分析师。
+根据用户给出的关键词和近期视频样本，输出结构化、可执行的话题分析报告。
+要求：
+- 使用中文
+- 基于样本推断，不要编造不存在的具体事件或 UP 主
+- 若样本不足，明确说明局限性
+- 分析要有洞察，避免空泛套话
+"""
+
+
+def build_analysis_prompt(
+    keyword: str,
+    videos_text: str,
+    *,
+    days: int,
+    hot_keywords: list[str] | None = None,
+) -> str:
+    hot_section = ""
+    if hot_keywords:
+        hot_section = "\n\n当前 B 站热搜参考：\n" + "、".join(hot_keywords[:15])
+
+    return f"""请分析 B 站近期与「{keyword}」相关的话题趋势。
+
+数据范围：近 {days} 天内按发布时间排序的视频样本。
+{hot_section}
+
+视频样本：
+{videos_text}
+
+请按以下结构输出 Markdown 报告：
+
+## 话题概览
+（1-2 段，总结该关键词在 B 站近期的整体热度与走向）
+
+## 热门子话题
+（列出 3-6 个细分方向，每个用 1-2 句话说明）
+
+## 内容特征
+（标题/封面/叙事/玩梗/情绪等共性，结合样本举例）
+
+## 受众与传播
+（谁在看、为什么传播、互动信号如播放/弹幕反映什么）
+
+## 创作机会
+（若 UP 主或品牌要跟进，可切入的 2-4 个角度）
+
+## 风险与注意
+（敏感点、同质化、时效性等）
+
+## 样本局限
+（样本量、时间窗口、搜索偏差等）
+"""
+
+
+def analyze_topic(
+    keyword: str,
+    videos_text: str,
+    *,
+    days: int,
+    hot_keywords: list[str] | None = None,
+    config: LLMConfig | None = None,
+) -> str:
+    cfg = config or load_llm_config()
+    client = OpenAI(api_key=cfg.api_key, base_url=cfg.base_url)
+    response = client.chat.completions.create(
+        model=cfg.model,
+        messages=[
+            {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": build_analysis_prompt(
+                    keyword,
+                    videos_text,
+                    days=days,
+                    hot_keywords=hot_keywords,
+                ),
+            },
+        ],
+        temperature=0.6,
+    )
+    content = response.choices[0].message.content
+    if not content:
+        raise RuntimeError("LLM 返回空内容")
+    return content.strip()

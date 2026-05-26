@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>B站话题分析</title>
+  <link rel="stylesheet" href="/static/app.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">Bilibili Topic Analyzer</p>
+        <h1>B站近期话题分析</h1>
+        <p class="subtitle">输入关键词，自动抓取近期视频并由 LLM 生成趋势报告</p>
+      </div>
+      <div class="hero-badge">Powered by LLM</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel">
+        <form id="analyze-form">
+          <label class="field">
+            <span>关键词</span>
+            <input id="keyword" name="keyword" type="text" placeholder="例如：AI绘画、原神、考研" required />
+          </label>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>回溯天数</span>
+              <input id="days" name="days" type="number" min="1" max="90" value="30" />
+            </label>
+            <label class="field">
+              <span>样本数量</span>
+              <input id="limit" name="limit" type="number" min="5" max="80" value="25" />
+            </label>
+          </div>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>排序方式</span>
+              <select id="order" name="order">
+                <option value="pubdate">最新发布</option>
+                <option value="totalrank">综合排序</option>
+                <option value="click">播放量</option>
+              </select>
+            </label>
+            <label class="field checkbox-field">
+              <input id="include_hot" name="include_hot" type="checkbox" checked />
+              <span>附带 B 站热搜上下文</span>
+            </label>
+          </div>
+
+          <button id="submit-btn" type="submit">开始分析</button>
+        </form>
+
+        <div id="status" class="status hidden">
+          <div class="spinner"></div>
+          <p id="status-text">正在分析...</p>
+        </div>
+      </section>
+
+      <aside class="panel side-panel">
+        <div class="panel-head">
+          <h2>B站热搜</h2>
+          <button id="refresh-trending" type="button" class="ghost-btn">刷新</button>
+        </div>
+        <ul id="trending-list" class="trending-list">
+          <li class="muted">加载中...</li>
+        </ul>
+      </aside>
+    </main>
+
+    <section id="results" class="results hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="result-title">分析报告</h2>
+          <div id="result-meta" class="meta"></div>
+        </div>
+        <div id="report" class="report markdown-body"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>视频样本</h2>
+          <span id="video-count" class="meta"></span>
+        </div>
+        <div id="video-list" class="video-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

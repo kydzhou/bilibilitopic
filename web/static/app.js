@@ -1,0 +1,132 @@
+const form = document.getElementById("analyze-form");
+const statusBox = document.getElementById("status");
+const statusText = document.getElementById("status-text");
+const submitBtn = document.getElementById("submit-btn");
+const results = document.getElementById("results");
+const reportEl = document.getElementById("report");
+const videoList = document.getElementById("video-list");
+const resultTitle = document.getElementById("result-title");
+const resultMeta = document.getElementById("result-meta");
+const videoCount = document.getElementById("video-count");
+const trendingList = document.getElementById("trending-list");
+const refreshTrendingBtn = document.getElementById("refresh-trending");
+const keywordInput = document.getElementById("keyword");
+
+async function loadTrending() {
+  trendingList.innerHTML = '<li class="muted">加载中...</li>';
+  try {
+    const response = await fetch("/api/trending?limit=15");
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.detail || "加载失败");
+    }
+    trendingList.innerHTML = data.items
+      .map(
+        (item) => `
+          <li>
+            <span class="rank ${item.rank <= 3 ? "top" : ""}">${item.rank}</span>
+            <span class="trend-keyword" data-keyword="${escapeAttr(item.keyword)}">${escapeHtml(item.keyword)}</span>
+            ${item.label ? `<span class="tag">${escapeHtml(item.label)}</span>` : ""}
+          </li>
+        `
+      )
+      .join("");
+
+    trendingList.querySelectorAll(".trend-keyword").forEach((node) => {
+      node.addEventListener("click", () => {
+        keywordInput.value = node.dataset.keyword;
+        keywordInput.focus();
+      });
+    });
+  } catch (error) {
+    trendingList.innerHTML = `<li class="error">${escapeHtml(error.message)}</li>`;
+  }
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = {
+    keyword: keywordInput.value.trim(),
+    days: Number(document.getElementById("days").value),
+    limit: Number(document.getElementById("limit").value),
+    order: document.getElementById("order").value,
+    include_hot: document.getElementById("include_hot").checked,
+  };
+
+  if (!payload.keyword) {
+    return;
+  }
+
+  setLoading(true, "正在搜索 B 站视频...");
+  results.classList.add("hidden");
+
+  try {
+    setLoading(true, "正在调用 LLM 生成报告，请稍候...");
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.detail || "分析失败");
+    }
+    renderResults(data);
+  } catch (error) {
+    reportEl.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+    videoList.innerHTML = "";
+    results.classList.remove("hidden");
+  } finally {
+    setLoading(false);
+  }
+});
+
+function renderResults(data) {
+  resultTitle.textContent = `「${data.keyword}」分析报告`;
+  resultMeta.textContent = `生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 排序 ${data.order}`;
+  videoCount.textContent = `${data.video_count} 条`;
+  reportEl.innerHTML = marked.parse(data.report || "暂无报告");
+
+  videoList.innerHTML = data.videos
+    .map(
+      (video, index) => `
+        <article class="video-card">
+          <h3>${index + 1}. ${escapeHtml(video.title)}</h3>
+          <div class="video-meta">
+            <span>UP主：${escapeHtml(video.author)}</span>
+            <span>播放：${video.play.toLocaleString()}</span>
+            <span>弹幕：${video.danmaku.toLocaleString()}</span>
+            <span>发布：${escapeHtml(video.pubdate)}</span>
+            ${video.tag ? `<span>标签：${escapeHtml(video.tag)}</span>` : ""}
+          </div>
+          ${video.url ? `<a href="${escapeAttr(video.url)}" target="_blank" rel="noopener">查看视频</a>` : ""}
+        </article>
+      `
+    )
+    .join("");
+
+  results.classList.remove("hidden");
+  results.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function setLoading(loading, message) {
+  submitBtn.disabled = loading;
+  statusBox.classList.toggle("hidden", !loading);
+  statusText.textContent = message || "正在分析...";
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replaceAll("`", "&#96;");
+}
+
+refreshTrendingBtn.addEventListener("click", loadTrending);
+loadTrending();
