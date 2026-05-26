@@ -1,8 +1,22 @@
-const BASE_PATH = window.BASE_PATH || "";
+const BASE_PATH =
+  window.BASE_PATH || document.querySelector('meta[name="base-path"]')?.content || "";
 const STORAGE_KEY = "bilibilitopic_llm_config";
 
 function apiUrl(path) {
   return `${BASE_PATH}${path}`;
+}
+
+function formatErrorDetail(detail, status) {
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    return detail.map((item) => item.msg || JSON.stringify(item)).join("；");
+  }
+  if (detail && typeof detail === "object") {
+    return JSON.stringify(detail);
+  }
+  return `请求失败（HTTP ${status}）`;
 }
 
 const form = document.getElementById("analyze-form");
@@ -80,7 +94,7 @@ async function loadTrending() {
     const response = await fetch(apiUrl("/api/trending?limit=15"));
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.detail || "加载失败");
+      throw new Error(formatErrorDetail(data.detail, response.status));
     }
     trendingList.innerHTML = data.items
       .map(
@@ -136,14 +150,22 @@ form.addEventListener("submit", async (event) => {
 
   try {
     setLoading(true, "正在调用 LLM 生成报告，请稍候...");
-    const response = await fetch(apiUrl("/api/analyze"), {
+    const analyzeUrl = apiUrl("/api/analyze");
+    const response = await fetch(analyzeUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = await response.json();
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
     if (!response.ok) {
-      throw new Error(data.detail || "分析失败");
+      throw new Error(
+        `${formatErrorDetail(data.detail, response.status)}（${analyzeUrl}）`
+      );
     }
     renderResults(data);
   } catch (error) {

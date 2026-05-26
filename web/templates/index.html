@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>B站话题分析</title>
   <meta name="base-path" content="{{ base_path }}" />
-  <link rel="stylesheet" href="{{ base_path }}/static/app.css" />
+  <link rel="stylesheet" href="{{ base_path }}/static/app.css?v={{ app_version }}" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -112,6 +112,6 @@
   </div>
 
   <script>window.BASE_PATH = {{ base_path_json }};</script>
-  <script src="{{ base_path }}/static/app.js"></script>
+  <script src="{{ base_path }}/static/app.js?v={{ app_version }}"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -17,6 +17,7 @@ from analyzer.llm import make_llm_config
 from analyzer.service import AnalysisRequest, run_analysis, result_to_dict
 
 BASE_DIR = Path(__file__).resolve().parent
+APP_VERSION = "1.0.2"
 
 
 def normalize_base_path(raw: str) -> str:
@@ -46,12 +47,11 @@ class AnalyzeBody(BaseModel):
     llm: LLMBody
 
 
-def create_app(base_path: str = "") -> FastAPI:
-    app = FastAPI(title="B站话题分析", version="1.0.0")
-    app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+def create_router(base_path: str) -> APIRouter:
+    router = APIRouter()
     templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-    @app.get("/", response_class=HTMLResponse)
+    @router.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request=request,
@@ -59,10 +59,11 @@ def create_app(base_path: str = "") -> FastAPI:
             context={
                 "base_path": base_path,
                 "base_path_json": json.dumps(base_path),
+                "app_version": APP_VERSION,
             },
         )
 
-    @app.get("/api/health")
+    @router.get("/api/health")
     async def health() -> dict:
         status = {"bilibili": "ok", "llm": "由浏览器填写", "base_path": base_path or "/"}
         try:
@@ -71,7 +72,7 @@ def create_app(base_path: str = "") -> FastAPI:
             status["bilibili"] = str(exc)
         return status
 
-    @app.get("/api/trending")
+    @router.get("/api/trending")
     async def trending(limit: int = 20) -> dict:
         limit = max(1, min(limit, 50))
         try:
@@ -85,7 +86,7 @@ def create_app(base_path: str = "") -> FastAPI:
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"B站热搜获取失败: {exc}") from exc
 
-    @app.post("/api/analyze")
+    @router.post("/api/analyze")
     async def analyze(body: AnalyzeBody) -> dict:
         try:
             llm_config = make_llm_config(
@@ -111,21 +112,29 @@ def create_app(base_path: str = "") -> FastAPI:
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"分析失败: {exc}") from exc
 
+    return router
+
+
+def build_application() -> FastAPI:
+    app = FastAPI(title="B站话题分析", version=APP_VERSION)
+    prefix = BASE_PATH
+    router = create_router(prefix)
+
+    if prefix:
+        @app.get(prefix, include_in_schema=False)
+        async def redirect_to_slash() -> RedirectResponse:
+            return RedirectResponse(url=f"{prefix}/", status_code=301)
+
+        app.include_router(router, prefix=prefix)
+        app.mount(f"{prefix}/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+    else:
+        app.include_router(router)
+        app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
     return app
 
 
-inner_app = create_app(BASE_PATH)
-
-if BASE_PATH:
-    application = FastAPI()
-
-    @application.get(BASE_PATH, include_in_schema=False)
-    async def redirect_to_slash() -> RedirectResponse:
-        return RedirectResponse(url=f"{BASE_PATH}/", status_code=301)
-
-    application.mount(BASE_PATH, inner_app)
-else:
-    application = inner_app
+application = build_application()
 
 
 def main() -> None:
