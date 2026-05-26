@@ -17,7 +17,7 @@ from analyzer.llm import make_llm_config
 from analyzer.service import AnalysisRequest, run_analysis, result_to_dict
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 
 
 def normalize_base_path(raw: str) -> str:

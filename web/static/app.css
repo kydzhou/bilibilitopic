@@ -27,7 +27,7 @@ body {
 }
 
 .page {
-  max-width: 1180px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 32px 20px 64px;
 }
@@ -70,10 +70,51 @@ body {
   white-space: nowrap;
 }
 
-.layout {
-  display: block;
-  max-width: 760px;
-  margin: 0 auto;
+.workspace {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.results-column {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.config-column {
+  position: sticky;
+  top: 20px;
+}
+
+.config-panel {
+  padding: 20px;
+}
+
+.config-title {
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+.empty-state h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.panel-head-stack {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.panel-head-stack .meta {
+  line-height: 1.6;
 }
 
 .panel {
@@ -300,7 +341,6 @@ button[type="submit"]:disabled {
 }
 
 .results {
-  margin-top: 24px;
   display: grid;
   gap: 20px;
 }
@@ -376,12 +416,17 @@ button[type="submit"]:disabled {
   color: #ff8f98;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .hero {
     flex-direction: column;
   }
 
-  .grid-2 {
+  .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .config-column {
+    position: static;
+    order: -1;
   }
 }

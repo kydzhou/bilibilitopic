@@ -19,74 +19,82 @@
       <div class="hero-badge">Powered by LLM</div>
     </header>
 
-    <main class="layout">
-      <section class="panel form-panel">
-        <form id="analyze-form">
-          <details class="llm-panel" id="llm-panel" open>
-            <summary>LLM 配置 <span class="hint">（保存在浏览器本地）</span></summary>
-            <div class="llm-fields">
-              <label class="field">
-                <span>API Key</span>
-                <input id="llm-api-key" name="llm_api_key" type="password" placeholder="sk-..." autocomplete="off" required />
-              </label>
-              <label class="field">
-                <span>Base URL</span>
-                <input id="llm-base-url" name="llm_base_url" type="url" value="https://api.openai.com/v1" placeholder="https://api.deepseek.com/v1" required />
-              </label>
-              <label class="field">
-                <span>模型</span>
-                <input id="llm-model" name="llm_model" type="text" value="gpt-4o-mini" placeholder="deepseek-chat" required />
-              </label>
-              <p class="field-hint">Key 仅保存在本机浏览器，不会写入服务器配置文件。</p>
+    <main class="workspace">
+      <section class="results-column">
+        <div id="results-empty" class="panel empty-state">
+          <h2>分析结果</h2>
+          <p>在右侧填写配置并点击「开始分析」，报告与视频样本将显示在这里。</p>
+        </div>
+
+        <div id="results-content" class="results hidden">
+          <div class="panel">
+            <div class="panel-head panel-head-stack">
+              <h2 id="result-title">分析报告</h2>
+              <div id="result-meta" class="meta"></div>
             </div>
-          </details>
+            <div id="report" class="report markdown-body"></div>
+          </div>
 
-          <label class="field">
-            <span>搜索关键词</span>
-            <input id="keyword" name="keyword" type="text" placeholder="输入要在 B 站搜索的词，如：AI绘画、原神、考研" required />
-            <p class="field-hint">将使用该词在 B 站搜索并抓取视频样本。</p>
-          </label>
+          <div class="panel">
+            <div class="panel-head">
+              <h2>视频样本</h2>
+              <span id="video-count" class="meta"></span>
+            </div>
+            <div id="video-list" class="video-list"></div>
+          </div>
+        </div>
+      </section>
 
-          <div class="grid-2">
+      <aside class="config-column">
+        <section class="panel config-panel">
+          <h2 class="config-title">配置</h2>
+          <form id="analyze-form">
+            <details class="llm-panel" id="llm-panel" open>
+              <summary>LLM 配置 <span class="hint">（保存在浏览器本地）</span></summary>
+              <div class="llm-fields">
+                <label class="field">
+                  <span>API Key</span>
+                  <input id="llm-api-key" name="llm_api_key" type="password" placeholder="sk-..." autocomplete="off" required />
+                </label>
+                <label class="field">
+                  <span>Base URL</span>
+                  <input id="llm-base-url" name="llm_base_url" type="url" value="https://api.openai.com/v1" placeholder="https://api.deepseek.com/v1" required />
+                </label>
+                <label class="field">
+                  <span>模型</span>
+                  <input id="llm-model" name="llm_model" type="text" value="gpt-4o-mini" placeholder="deepseek-chat" required />
+                </label>
+                <p class="field-hint">Key 仅保存在本机浏览器，不会写入服务器。</p>
+              </div>
+            </details>
+
+            <label class="field">
+              <span>搜索关键词</span>
+              <input id="keyword" name="keyword" type="text" placeholder="如：AI绘画、原神、考研" required />
+            </label>
+
             <label class="field">
               <span>回溯天数</span>
               <input id="days" name="days" type="number" min="1" max="90" value="30" />
             </label>
+
             <label class="field">
               <span>样本数量</span>
               <input id="limit" name="limit" type="number" min="5" max="80" value="25" />
             </label>
+
+            <p class="field-hint">综合排序，仅采用播放 ≥ 1 万的视频。</p>
+
+            <button id="submit-btn" type="submit">开始分析</button>
+          </form>
+
+          <div id="status" class="status hidden">
+            <div class="spinner"></div>
+            <p id="status-text">正在分析...</p>
           </div>
-
-          <p class="field-hint">搜索规则：B 站综合排序，仅采用播放 ≥ 1 万的视频。</p>
-
-          <button id="submit-btn" type="submit">开始分析</button>
-        </form>
-
-        <div id="status" class="status hidden">
-          <div class="spinner"></div>
-          <p id="status-text">正在分析...</p>
-        </div>
-      </section>
+        </section>
+      </aside>
     </main>
-
-    <section id="results" class="results hidden">
-      <div class="panel">
-        <div class="panel-head">
-          <h2 id="result-title">分析报告</h2>
-          <div id="result-meta" class="meta"></div>
-        </div>
-        <div id="report" class="report markdown-body"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h2>视频样本</h2>
-          <span id="video-count" class="meta"></span>
-        </div>
-        <div id="video-list" class="video-list"></div>
-      </div>
-    </section>
   </div>
 
   <script>window.BASE_PATH = {{ base_path_json }};</script>

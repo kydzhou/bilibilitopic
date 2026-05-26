@@ -23,7 +23,8 @@ const form = document.getElementById("analyze-form");
 const statusBox = document.getElementById("status");
 const statusText = document.getElementById("status-text");
 const submitBtn = document.getElementById("submit-btn");
-const results = document.getElementById("results");
+const resultsEmpty = document.getElementById("results-empty");
+const resultsContent = document.getElementById("results-content");
 const reportEl = document.getElementById("report");
 const videoList = document.getElementById("video-list");
 const resultTitle = document.getElementById("result-title");
@@ -111,7 +112,10 @@ form.addEventListener("submit", async (event) => {
   }
 
   setLoading(true, `正在搜索 B 站「${payload.keyword}」...`);
-  results.classList.add("hidden");
+  resultsContent.classList.add("hidden");
+  resultsEmpty.classList.remove("hidden");
+  reportEl.innerHTML = "";
+  videoList.innerHTML = "";
 
   try {
     setLoading(true, "正在调用 LLM 生成报告，请稍候...");
@@ -136,7 +140,8 @@ form.addEventListener("submit", async (event) => {
   } catch (error) {
     reportEl.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
     videoList.innerHTML = "";
-    results.classList.remove("hidden");
+    resultsEmpty.classList.add("hidden");
+    resultsContent.classList.remove("hidden");
   } finally {
     setLoading(false);
   }
@@ -166,8 +171,8 @@ function renderResults(data) {
     )
     .join("");
 
-  results.classList.remove("hidden");
-  results.scrollIntoView({ behavior: "smooth", block: "start" });
+  resultsEmpty.classList.add("hidden");
+  resultsContent.classList.remove("hidden");
 }
 
 function setLoading(loading, message) {
