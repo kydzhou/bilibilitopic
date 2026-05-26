@@ -17,7 +17,7 @@ from analyzer.llm import make_llm_config
 from analyzer.service import AnalysisRequest, run_analysis, result_to_dict
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 
 
 def normalize_base_path(raw: str) -> str:
@@ -42,7 +42,6 @@ class AnalyzeBody(BaseModel):
     keyword: str = Field(..., min_length=1, max_length=100)
     days: int = Field(30, ge=1, le=90)
     limit: int = Field(25, ge=5, le=80)
-    order: str = Field("totalrank", pattern="^(pubdate|totalrank|click)$")
     llm: LLMBody
 
 
@@ -84,7 +83,6 @@ def create_router(base_path: str) -> APIRouter:
                     keyword=body.keyword,
                     days=body.days,
                     limit=body.limit,
-                    order=body.order,
                     llm_config=llm_config,
                 )
             )

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime
 
-from analyzer.bilibili import BilibiliClient, VideoItem, format_videos_for_llm
+from analyzer.bilibili import MIN_PLAY_COUNT, BilibiliClient, VideoItem, format_videos_for_llm
 from analyzer.llm import LLMConfig, analyze_topic
 
 
@@ -14,7 +14,6 @@ class AnalysisRequest:
     keyword: str
     days: int = 30
     limit: int = 25
-    order: str = "totalrank"
     llm_config: LLMConfig | None = None
 
 
@@ -36,7 +35,7 @@ class AnalysisResult:
     keyword: str
     days: int
     limit: int
-    order: str
+    min_play: int
     video_count: int
     videos: list[VideoSummary]
     report: str
@@ -67,14 +66,20 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         keyword,
         limit=request.limit,
         days=request.days,
-        order=request.order,
+        min_play=MIN_PLAY_COUNT,
     )
+    if not videos:
+        raise ValueError(
+            f"近 {request.days} 天内未找到播放 ≥ {MIN_PLAY_COUNT:,} 的相关视频，"
+            "请换关键词、扩大回溯天数或减少样本数量"
+        )
 
     videos_text = format_videos_for_llm(videos)
     report = analyze_topic(
         keyword,
         videos_text,
         days=request.days,
+        min_play=MIN_PLAY_COUNT,
         config=request.llm_config,
     )
 
@@ -82,7 +87,7 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         keyword=keyword,
         days=request.days,
         limit=request.limit,
-        order=request.order,
+        min_play=MIN_PLAY_COUNT,
         video_count=len(videos),
         videos=[_to_summary(video) for video in videos],
         report=report,

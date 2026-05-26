@@ -30,6 +30,8 @@ DEFAULT_HEADERS = {
     "Origin": "https://www.bilibili.com",
 }
 
+MIN_PLAY_COUNT = 10_000
+
 
 @dataclass
 class VideoItem:
@@ -199,50 +201,24 @@ class BilibiliClient:
         *,
         limit: int = 30,
         days: int = 30,
-        order: str = "totalrank",
-    ) -> list[VideoItem]:
-        if order == "pubdate":
-            return self._fetch_within_days(
-                keyword,
-                limit=limit,
-                days=days,
-                api_order="pubdate",
-                max_pages=5,
-            )
-
-        collected = self._fetch_within_days(
-            keyword,
-            limit=limit * 3 if order == "click" else limit,
-            days=days,
-            api_order="totalrank",
-            max_pages=15,
-        )
-        if order == "click":
-            collected.sort(key=lambda video: video.play, reverse=True)
-        return collected[:limit]
-
-    def _fetch_within_days(
-        self,
-        keyword: str,
-        *,
-        limit: int,
-        days: int,
-        api_order: str,
-        max_pages: int,
+        min_play: int = MIN_PLAY_COUNT,
     ) -> list[VideoItem]:
         collected: list[VideoItem] = []
         page = 1
+        max_pages = 20
         while len(collected) < limit and page <= max_pages:
             batch = self.search_videos(
                 keyword,
                 page=page,
                 page_size=50,
-                order=api_order,
+                order="totalrank",
                 days=days,
             )
             if not batch:
                 break
             for video in batch:
+                if video.play < min_play:
+                    continue
                 if video.bvid and all(existing.bvid != video.bvid for existing in collected):
                     collected.append(video)
                     if len(collected) >= limit:

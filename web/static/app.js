@@ -1,11 +1,6 @@
 const BASE_PATH =
   window.BASE_PATH || document.querySelector('meta[name="base-path"]')?.content || "";
 const STORAGE_KEY = "bilibilitopic_llm_config";
-const ORDER_LABELS = {
-  totalrank: "综合排序",
-  pubdate: "最新发布",
-  click: "播放量（时间范围内）",
-};
 
 function apiUrl(path) {
   return `${BASE_PATH}${path}`;
@@ -108,7 +103,6 @@ form.addEventListener("submit", async (event) => {
     keyword: keywordInput.value.trim(),
     days: Number(document.getElementById("days").value),
     limit: Number(document.getElementById("limit").value),
-    order: document.getElementById("order").value,
     llm,
   };
 
@@ -149,9 +143,8 @@ form.addEventListener("submit", async (event) => {
 });
 
 function renderResults(data) {
-  const orderLabel = ORDER_LABELS[data.order] || data.order;
   resultTitle.textContent = `搜索「${data.keyword}」的分析报告`;
-  resultMeta.textContent = `搜索关键词：${data.keyword} · 生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 排序 ${orderLabel}`;
+  resultMeta.textContent = `搜索关键词：${data.keyword} · 生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 综合排序 · 播放≥${(data.min_play || 10000).toLocaleString()}`;
   videoCount.textContent = `${data.video_count} 条`;
   reportEl.innerHTML = marked.parse(data.report || "暂无报告");
 

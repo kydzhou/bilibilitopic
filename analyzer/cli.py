@@ -35,15 +35,9 @@ def analyze_command(
     keyword: str = typer.Argument(..., help="要分析的关键词"),
     days: int = typer.Option(30, "--days", "-d", min=1, max=90, help="回溯天数"),
     limit: int = typer.Option(25, "--limit", "-l", min=5, max=80, help="抓取视频数量"),
-    order: str = typer.Option(
-        "totalrank",
-        "--order",
-        "-o",
-        help="排序：totalrank(综合) / pubdate(最新) / click(时间范围内播放量)",
-    ),
     save: Path | None = typer.Option(None, "--save", "-s", help="将报告保存为 Markdown 文件"),
 ) -> None:
-    """抓取近期视频并生成 LLM 话题分析报告。"""
+    """抓取近期视频并生成 LLM 话题分析报告（综合排序，播放≥1万）。"""
     _load_env()
 
     with Progress(
@@ -58,14 +52,13 @@ def analyze_command(
                 keyword=keyword,
                 days=days,
                 limit=limit,
-                order=order,
             )
         )
 
     console.print()
     console.print(
         Panel(
-            f"关键词: [bold cyan]{result.keyword}[/] | 样本: {result.video_count} 条 | 近 {result.days} 天 | 排序: {result.order}",
+            f"关键词: [bold cyan]{result.keyword}[/] | 样本: {result.video_count} 条 | 近 {result.days} 天 | 综合排序 | 播放≥{result.min_play:,}",
             title="B站话题分析",
             border_style="cyan",
         )
@@ -79,7 +72,8 @@ def analyze_command(
             f"# B站话题分析：{result.keyword}\n\n"
             f"- 生成时间: {result.generated_at}\n"
             f"- 样本数量: {result.video_count}\n"
-            f"- 时间范围: 近 {result.days} 天\n\n"
+            f"- 时间范围: 近 {result.days} 天\n"
+            f"- 筛选条件: 综合排序，播放 ≥ {result.min_play:,}\n\n"
         )
         save.write_text(header + result.report, encoding="utf-8")
         console.print(f"\n[green]报告已保存:[/] {save}")
@@ -90,9 +84,8 @@ def search_command(
     keyword: str = typer.Argument(..., help="搜索关键词"),
     days: int = typer.Option(30, "--days", "-d", min=1, max=90),
     limit: int = typer.Option(10, "--limit", "-l", min=1, max=50),
-    order: str = typer.Option("pubdate", "--order", "-o"),
 ) -> None:
-    """仅搜索视频，不调用 LLM（用于调试数据）。"""
+    """仅搜索视频，不调用 LLM（综合排序，播放≥1万）。"""
     client = BilibiliClient()
     with Progress(
         SpinnerColumn(),
@@ -101,7 +94,7 @@ def search_command(
         transient=True,
     ) as progress:
         progress.add_task(description="搜索中...", total=None)
-        videos = client.fetch_recent_videos(keyword, limit=limit, days=days, order=order)
+        videos = client.fetch_recent_videos(keyword, limit=limit, days=days)
 
     table = Table(title=f"「{keyword}」近期视频")
     table.add_column("#", style="dim")

@@ -58,15 +58,7 @@
             </label>
           </div>
 
-          <label class="field">
-            <span>排序方式</span>
-            <select id="order" name="order">
-              <option value="totalrank" selected>综合排序（推荐）</option>
-              <option value="pubdate">最新发布</option>
-              <option value="click">播放量（时间范围内）</option>
-            </select>
-            <p class="field-hint">综合排序会优先抓取回溯天数内更热门的视频，而不是 0 播放的新上传。</p>
-          </label>
+          <p class="field-hint">搜索规则：B 站综合排序，仅采用播放 ≥ 1 万的视频。</p>
 
           <button id="submit-btn" type="submit">开始分析</button>
         </form>
