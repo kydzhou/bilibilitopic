@@ -36,12 +36,11 @@ def analyze_command(
     days: int = typer.Option(30, "--days", "-d", min=1, max=90, help="回溯天数"),
     limit: int = typer.Option(25, "--limit", "-l", min=5, max=80, help="抓取视频数量"),
     order: str = typer.Option(
-        "pubdate",
+        "totalrank",
         "--order",
         "-o",
-        help="排序：pubdate(最新) / totalrank(综合) / click(播放)",
+        help="排序：totalrank(综合) / pubdate(最新) / click(时间范围内播放量)",
     ),
-    include_hot: bool = typer.Option(True, "--hot/--no-hot", help="是否附带热搜上下文"),
     save: Path | None = typer.Option(None, "--save", "-s", help="将报告保存为 Markdown 文件"),
 ) -> None:
     """抓取近期视频并生成 LLM 话题分析报告。"""
@@ -60,7 +59,6 @@ def analyze_command(
                 days=days,
                 limit=limit,
                 order=order,
-                include_hot=include_hot,
             )
         )
 

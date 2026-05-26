@@ -14,8 +14,7 @@ class AnalysisRequest:
     keyword: str
     days: int = 30
     limit: int = 25
-    order: str = "pubdate"
-    include_hot: bool = False
+    order: str = "totalrank"
     llm_config: LLMConfig | None = None
 
 
@@ -41,7 +40,6 @@ class AnalysisResult:
     video_count: int
     videos: list[VideoSummary]
     report: str
-    hot_keywords: list[str]
     generated_at: str
 
 
@@ -62,11 +60,9 @@ def _to_summary(video: VideoItem) -> VideoSummary:
 def run_analysis(request: AnalysisRequest) -> AnalysisResult:
     keyword = request.keyword.strip()
     if not keyword:
-        raise ValueError("关键词不能为空")
+        raise ValueError("搜索关键词不能为空")
 
     client = BilibiliClient()
-    hot_keywords: list[str] = []
-
     videos = client.fetch_recent_videos(
         keyword,
         limit=request.limit,
@@ -74,18 +70,11 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         order=request.order,
     )
 
-    if request.include_hot:
-        try:
-            hot_keywords = [item.keyword for item in client.get_hot_keywords(15)]
-        except Exception:
-            hot_keywords = []
-
     videos_text = format_videos_for_llm(videos)
     report = analyze_topic(
         keyword,
         videos_text,
         days=request.days,
-        hot_keywords=hot_keywords if request.include_hot else None,
         config=request.llm_config,
     )
 
@@ -97,7 +86,6 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         video_count=len(videos),
         videos=[_to_summary(video) for video in videos],
         report=report,
-        hot_keywords=hot_keywords,
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 

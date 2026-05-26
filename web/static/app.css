@@ -71,9 +71,9 @@ body {
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 1.4fr 0.9fr;
-  gap: 20px;
+  display: block;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .panel {
@@ -377,19 +377,11 @@ button[type="submit"]:disabled {
 }
 
 @media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
   .hero {
     flex-direction: column;
   }
 
   .grid-2 {
     grid-template-columns: 1fr;
-  }
-
-  .checkbox-field {
-    padding-top: 0;
   }
 }

@@ -44,7 +44,7 @@
           <label class="field">
             <span>搜索关键词</span>
             <input id="keyword" name="keyword" type="text" placeholder="输入要在 B 站搜索的词，如：AI绘画、原神、考研" required />
-            <p class="field-hint">分析将基于 B 站搜索该词得到的视频，与右侧热搜无关。</p>
+            <p class="field-hint">将使用该词在 B 站搜索并抓取视频样本。</p>
           </label>
 
           <div class="grid-2">
@@ -58,20 +58,15 @@
             </label>
           </div>
 
-          <div class="grid-2">
-            <label class="field">
-              <span>排序方式</span>
-              <select id="order" name="order">
-                <option value="pubdate">最新发布</option>
-                <option value="totalrank">综合排序</option>
-                <option value="click">播放量</option>
-              </select>
-            </label>
-            <label class="field checkbox-field">
-              <input id="include_hot" name="include_hot" type="checkbox" />
-              <span>附带全站热搜作背景参考（不改变分析主题）</span>
-            </label>
-          </div>
+          <label class="field">
+            <span>排序方式</span>
+            <select id="order" name="order">
+              <option value="totalrank" selected>综合排序（推荐）</option>
+              <option value="pubdate">最新发布</option>
+              <option value="click">播放量（时间范围内）</option>
+            </select>
+            <p class="field-hint">综合排序会优先抓取回溯天数内更热门的视频，而不是 0 播放的新上传。</p>
+          </label>
 
           <button id="submit-btn" type="submit">开始分析</button>
         </form>
@@ -81,17 +76,6 @@
           <p id="status-text">正在分析...</p>
         </div>
       </section>
-
-      <aside class="panel side-panel">
-        <div class="panel-head">
-          <h2>全站热搜</h2>
-          <button id="refresh-trending" type="button" class="ghost-btn">刷新</button>
-        </div>
-        <p class="side-hint">仅供参考，点击可填入左侧搜索框</p>
-        <ul id="trending-list" class="trending-list">
-          <li class="muted">加载中...</li>
-        </ul>
-      </aside>
     </main>
 
     <section id="results" class="results hidden">

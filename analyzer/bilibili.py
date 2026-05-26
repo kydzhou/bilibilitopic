@@ -182,8 +182,8 @@ class BilibiliClient:
                     bvid=bvid,
                     title=_strip_markup(item.get("title", "")),
                     author=item.get("author", ""),
-                    play=int(item.get("play", 0) or 0),
-                    danmaku=int(item.get("danmaku", 0) or 0),
+                    play=_parse_count(item.get("play")),
+                    danmaku=_parse_count(item.get("danmaku") or item.get("video_review")),
                     pubdate=pubdate,
                     description=_strip_markup(item.get("description", "")),
                     tag=item.get("tag", ""),
@@ -199,16 +199,45 @@ class BilibiliClient:
         *,
         limit: int = 30,
         days: int = 30,
-        order: str = "pubdate",
+        order: str = "totalrank",
+    ) -> list[VideoItem]:
+        if order == "pubdate":
+            return self._fetch_within_days(
+                keyword,
+                limit=limit,
+                days=days,
+                api_order="pubdate",
+                max_pages=5,
+            )
+
+        collected = self._fetch_within_days(
+            keyword,
+            limit=limit * 3 if order == "click" else limit,
+            days=days,
+            api_order="totalrank",
+            max_pages=15,
+        )
+        if order == "click":
+            collected.sort(key=lambda video: video.play, reverse=True)
+        return collected[:limit]
+
+    def _fetch_within_days(
+        self,
+        keyword: str,
+        *,
+        limit: int,
+        days: int,
+        api_order: str,
+        max_pages: int,
     ) -> list[VideoItem]:
         collected: list[VideoItem] = []
         page = 1
-        while len(collected) < limit and page <= 5:
+        while len(collected) < limit and page <= max_pages:
             batch = self.search_videos(
                 keyword,
                 page=page,
-                page_size=min(50, limit),
-                order=order,
+                page_size=50,
+                order=api_order,
                 days=days,
             )
             if not batch:
@@ -244,6 +273,31 @@ class BilibiliClient:
 
 def _strip_markup(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text)
+
+
+def _parse_count(value: Any) -> int:
+    if value is None:
+        return 0
+    if isinstance(value, (int, float)):
+        return int(value)
+    text = str(value).strip().replace(",", "")
+    if not text:
+        return 0
+    try:
+        return int(text)
+    except ValueError:
+        pass
+    multiplier = 1
+    if text.endswith("万"):
+        multiplier = 10_000
+        text = text[:-1]
+    elif text.endswith("亿"):
+        multiplier = 100_000_000
+        text = text[:-1]
+    try:
+        return int(float(text) * multiplier)
+    except ValueError:
+        return 0
 
 
 def _hot_label(word_type: Any) -> str:

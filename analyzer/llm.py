@@ -43,12 +43,11 @@ def load_llm_config() -> LLMConfig:
 
 ANALYSIS_SYSTEM_PROMPT = """你是一位熟悉 B 站生态的中文内容分析师。
 用户会提供一个「搜索关键词」，以及按该关键词在 B 站搜索得到的近期视频样本。
-你的任务是分析该搜索关键词相关的话题趋势，而不是分析 B 站热搜榜。
+你的任务是分析该搜索关键词相关的话题趋势。
 
 要求：
 - 使用中文
 - 分析对象必须是用户提供的搜索关键词及其视频样本
-- 若提供了 B 站热搜列表，仅作背景参考，不要转而分析热搜词
 - 基于样本推断，不要编造不存在的具体事件或 UP 主
 - 若样本不足，明确说明局限性
 - 分析要有洞察，避免空泛套话
@@ -60,22 +59,13 @@ def build_analysis_prompt(
     videos_text: str,
     *,
     days: int,
-    hot_keywords: list[str] | None = None,
 ) -> str:
-    hot_section = ""
-    if hot_keywords:
-        hot_section = (
-            "\n\n【仅供参考】当前 B 站全站热搜（与本次搜索关键词无关，不要作为分析主题）：\n"
-            + "、".join(hot_keywords[:15])
-        )
-
     return f"""请分析 B 站近期与搜索关键词「{keyword}」相关的话题趋势。
 
 【重要】本次分析主题 = 搜索关键词「{keyword}」。
-视频样本均来自 B 站搜索框搜索「{keyword}」的结果，不是热搜榜。
+视频样本均来自 B 站搜索框搜索「{keyword}」的结果。
 
-数据范围：近 {days} 天内按指定排序抓取的视频样本。
-{hot_section}
+数据范围：近 {days} 天内抓取的视频样本（按用户选择的排序方式）。
 
 视频样本（搜索「{keyword}」得到）：
 {videos_text}
@@ -110,7 +100,6 @@ def analyze_topic(
     videos_text: str,
     *,
     days: int,
-    hot_keywords: list[str] | None = None,
     config: LLMConfig | None = None,
 ) -> str:
     cfg = config or load_llm_config()
@@ -125,7 +114,6 @@ def analyze_topic(
                     keyword,
                     videos_text,
                     days=days,
-                    hot_keywords=hot_keywords,
                 ),
             },
         ],

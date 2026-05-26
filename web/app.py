@@ -17,7 +17,7 @@ from analyzer.llm import make_llm_config
 from analyzer.service import AnalysisRequest, run_analysis, result_to_dict
 
 BASE_DIR = Path(__file__).resolve().parent
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.1.0"
 
 
 def normalize_base_path(raw: str) -> str:
@@ -42,8 +42,7 @@ class AnalyzeBody(BaseModel):
     keyword: str = Field(..., min_length=1, max_length=100)
     days: int = Field(30, ge=1, le=90)
     limit: int = Field(25, ge=5, le=80)
-    order: str = Field("pubdate", pattern="^(pubdate|totalrank|click)$")
-    include_hot: bool = False
+    order: str = Field("totalrank", pattern="^(pubdate|totalrank|click)$")
     llm: LLMBody
 
 
@@ -67,24 +66,10 @@ def create_router(base_path: str) -> APIRouter:
     async def health() -> dict:
         status = {"bilibili": "ok", "llm": "由浏览器填写", "base_path": base_path or "/"}
         try:
-            BilibiliClient().get_hot_keywords(1)
+            BilibiliClient().search_videos("科技", page=1, page_size=1, order="totalrank", days=7)
         except Exception as exc:
             status["bilibili"] = str(exc)
         return status
-
-    @router.get("/api/trending")
-    async def trending(limit: int = 20) -> dict:
-        limit = max(1, min(limit, 50))
-        try:
-            items = BilibiliClient().get_hot_keywords(limit)
-            return {
-                "items": [
-                    {"rank": item.rank, "keyword": item.keyword, "label": item.label}
-                    for item in items
-                ]
-            }
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=f"B站热搜获取失败: {exc}") from exc
 
     @router.post("/api/analyze")
     async def analyze(body: AnalyzeBody) -> dict:
@@ -100,7 +85,6 @@ def create_router(base_path: str) -> APIRouter:
                     days=body.days,
                     limit=body.limit,
                     order=body.order,
-                    include_hot=body.include_hot,
                     llm_config=llm_config,
                 )
             )
