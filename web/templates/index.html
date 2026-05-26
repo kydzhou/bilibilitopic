@@ -16,7 +16,6 @@
         <h1>B站近期话题分析</h1>
         <p class="subtitle">输入搜索关键词，抓取 B 站搜索结果中的近期视频，并由 LLM 生成趋势报告</p>
       </div>
-      <div class="hero-badge">Powered by LLM</div>
     </header>
 
     <main class="workspace">
@@ -49,25 +48,6 @@
         <section class="panel config-panel">
           <h2 class="config-title">配置</h2>
           <form id="analyze-form">
-            <details class="llm-panel" id="llm-panel" open>
-              <summary>LLM 配置 <span class="hint">（保存在浏览器本地）</span></summary>
-              <div class="llm-fields">
-                <label class="field">
-                  <span>API Key</span>
-                  <input id="llm-api-key" name="llm_api_key" type="password" placeholder="sk-..." autocomplete="off" required />
-                </label>
-                <label class="field">
-                  <span>Base URL</span>
-                  <input id="llm-base-url" name="llm_base_url" type="url" value="https://api.openai.com/v1" placeholder="https://api.deepseek.com/v1" required />
-                </label>
-                <label class="field">
-                  <span>模型</span>
-                  <input id="llm-model" name="llm_model" type="text" value="gpt-4o-mini" placeholder="deepseek-chat" required />
-                </label>
-                <p class="field-hint">Key 仅保存在本机浏览器，不会写入服务器。</p>
-              </div>
-            </details>
-
             <label class="field">
               <span>搜索关键词</span>
               <input id="keyword" name="keyword" type="text" placeholder="如：AI绘画、原神、考研" required />
@@ -98,6 +78,28 @@
             <div class="spinner"></div>
             <p id="status-text">正在分析...</p>
           </div>
+
+          <details class="llm-panel" id="llm-panel">
+            <summary>
+              <span class="llm-summary-label">LLM 配置</span>
+              <span class="hint">保存在浏览器本地</span>
+            </summary>
+            <div class="llm-fields">
+              <label class="field">
+                <span>API Key</span>
+                <input id="llm-api-key" name="llm_api_key" type="password" placeholder="sk-..." autocomplete="off" required />
+              </label>
+              <label class="field">
+                <span>Base URL</span>
+                <input id="llm-base-url" name="llm_base_url" type="url" value="https://api.openai.com/v1" placeholder="https://api.deepseek.com/v1" required />
+              </label>
+              <label class="field">
+                <span>模型</span>
+                <input id="llm-model" name="llm_model" type="text" value="gpt-4o-mini" placeholder="deepseek-chat" required />
+              </label>
+              <p class="field-hint">Key 仅保存在本机浏览器，不会写入服务器。</p>
+            </div>
+          </details>
         </section>
       </aside>
     </main>

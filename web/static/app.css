@@ -60,16 +60,6 @@ body {
   line-height: 1.6;
 }
 
-.hero-badge {
-  background: rgba(251, 114, 153, 0.12);
-  border: 1px solid rgba(251, 114, 153, 0.35);
-  color: var(--pink);
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
 .workspace {
   display: grid;
   grid-template-columns: 7fr 3fr;
@@ -151,7 +141,8 @@ body {
 }
 
 .llm-panel {
-  margin-bottom: 18px;
+  margin-top: 20px;
+  margin-bottom: 0;
   border: 1px solid rgba(251, 114, 153, 0.22);
   border-radius: 14px;
   background: rgba(251, 114, 153, 0.05);
@@ -159,20 +150,42 @@ body {
 }
 
 .llm-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   cursor: pointer;
   padding: 14px 0 10px;
   font-weight: 600;
   list-style: none;
+  user-select: none;
 }
 
 .llm-panel summary::-webkit-details-marker {
   display: none;
 }
 
+.llm-panel summary::before {
+  content: "▸";
+  flex-shrink: 0;
+  margin-right: 8px;
+  color: var(--pink);
+  transition: transform 0.15s ease;
+}
+
+.llm-panel[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.llm-summary-label {
+  flex: 1;
+}
+
 .llm-panel .hint {
   color: var(--muted);
   font-weight: 400;
-  font-size: 13px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .llm-fields {
