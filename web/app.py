@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -53,8 +54,12 @@ def create_app(base_path: str = "") -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "base_path": base_path},
+            request=request,
+            name="index.html",
+            context={
+                "base_path": base_path,
+                "base_path_json": json.dumps(base_path),
+            },
         )
 
     @app.get("/api/health")
