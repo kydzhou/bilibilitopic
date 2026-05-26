@@ -61,12 +61,14 @@ def build_analysis_prompt(
     days: int,
     min_play: int,
 ) -> str:
+    play_filter = f"、播放量 ≥ {min_play:,}" if min_play > 0 else ""
+
     return f"""请分析 B 站近期与搜索关键词「{keyword}」相关的话题趋势。
 
 【重要】本次分析主题 = 搜索关键词「{keyword}」。
 视频样本均来自 B 站搜索框搜索「{keyword}」的结果。
 
-数据范围：近 {days} 天内、按 B 站综合排序抓取、播放量 ≥ {min_play:,} 的视频样本。
+数据范围：近 {days} 天内、按 B 站综合排序抓取{play_filter} 的视频样本。
 
 视频样本（搜索「{keyword}」得到）：
 {videos_text}

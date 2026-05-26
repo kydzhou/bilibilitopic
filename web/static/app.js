@@ -104,6 +104,7 @@ form.addEventListener("submit", async (event) => {
     keyword: keywordInput.value.trim(),
     days: Number(document.getElementById("days").value),
     limit: Number(document.getElementById("limit").value),
+    min_play: Number(document.getElementById("min-play").value),
     llm,
   };
 
@@ -147,9 +148,16 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+function formatMinPlay(minPlay) {
+  if (!minPlay || minPlay <= 0) {
+    return "播放不限";
+  }
+  return `播放≥${minPlay.toLocaleString()}`;
+}
+
 function renderResults(data) {
   resultTitle.textContent = `搜索「${data.keyword}」的分析报告`;
-  resultMeta.textContent = `搜索关键词：${data.keyword} · 生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 综合排序 · 播放≥${(data.min_play || 10000).toLocaleString()}`;
+  resultMeta.textContent = `搜索关键词：${data.keyword} · 生成于 ${data.generated_at} · 近 ${data.days} 天 · ${data.video_count} 条样本 · 综合排序 · ${formatMinPlay(data.min_play)}`;
   videoCount.textContent = `${data.video_count} 条`;
   reportEl.innerHTML = marked.parse(data.report || "暂无报告");
 

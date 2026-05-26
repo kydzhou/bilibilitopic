@@ -30,7 +30,8 @@ DEFAULT_HEADERS = {
     "Origin": "https://www.bilibili.com",
 }
 
-MIN_PLAY_COUNT = 10_000
+MIN_PLAY_COUNT = 10_000  # 默认最低播放量
+DEFAULT_MIN_PLAY = MIN_PLAY_COUNT
 
 
 @dataclass
@@ -201,7 +202,7 @@ class BilibiliClient:
         *,
         limit: int = 30,
         days: int = 30,
-        min_play: int = MIN_PLAY_COUNT,
+        min_play: int = DEFAULT_MIN_PLAY,
     ) -> list[VideoItem]:
         collected: list[VideoItem] = []
         page = 1
@@ -217,7 +218,7 @@ class BilibiliClient:
             if not batch:
                 break
             for video in batch:
-                if video.play < min_play:
+                if min_play > 0 and video.play < min_play:
                     continue
                 if video.bvid and all(existing.bvid != video.bvid for existing in collected):
                     collected.append(video)

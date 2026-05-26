@@ -83,7 +83,13 @@
               <input id="limit" name="limit" type="number" min="5" max="80" value="25" />
             </label>
 
-            <p class="field-hint">综合排序，仅采用播放 ≥ 1 万的视频。</p>
+            <label class="field">
+              <span>最低播放量</span>
+              <input id="min-play" name="min_play" type="number" min="0" step="1000" value="10000" />
+              <p class="field-hint">默认 1 万；填 0 表示不限制播放量。</p>
+            </label>
+
+            <p class="field-hint">搜索采用 B 站综合排序。</p>
 
             <button id="submit-btn" type="submit">开始分析</button>
           </form>

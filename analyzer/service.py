@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime
 
-from analyzer.bilibili import MIN_PLAY_COUNT, BilibiliClient, VideoItem, format_videos_for_llm
+from analyzer.bilibili import DEFAULT_MIN_PLAY, BilibiliClient, VideoItem, format_videos_for_llm
 from analyzer.llm import LLMConfig, analyze_topic
 
 
@@ -14,6 +14,7 @@ class AnalysisRequest:
     keyword: str
     days: int = 30
     limit: int = 25
+    min_play: int = DEFAULT_MIN_PLAY
     llm_config: LLMConfig | None = None
 
 
@@ -61,16 +62,22 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
     if not keyword:
         raise ValueError("搜索关键词不能为空")
 
+    min_play = max(0, request.min_play)
     client = BilibiliClient()
     videos = client.fetch_recent_videos(
         keyword,
         limit=request.limit,
         days=request.days,
-        min_play=MIN_PLAY_COUNT,
+        min_play=min_play,
     )
     if not videos:
+        if min_play > 0:
+            raise ValueError(
+                f"近 {request.days} 天内未找到播放 ≥ {min_play:,} 的相关视频，"
+                "请降低最低播放量、换关键词、扩大回溯天数或减少样本数量"
+            )
         raise ValueError(
-            f"近 {request.days} 天内未找到播放 ≥ {MIN_PLAY_COUNT:,} 的相关视频，"
+            f"近 {request.days} 天内未找到相关视频，"
             "请换关键词、扩大回溯天数或减少样本数量"
         )
 
@@ -79,7 +86,7 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         keyword,
         videos_text,
         days=request.days,
-        min_play=MIN_PLAY_COUNT,
+        min_play=min_play,
         config=request.llm_config,
     )
 
@@ -87,7 +94,7 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         keyword=keyword,
         days=request.days,
         limit=request.limit,
-        min_play=MIN_PLAY_COUNT,
+        min_play=min_play,
         video_count=len(videos),
         videos=[_to_summary(video) for video in videos],
         report=report,
