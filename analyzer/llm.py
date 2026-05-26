@@ -15,14 +15,29 @@ class LLMConfig:
     model: str
 
 
+def make_llm_config(
+    api_key: str,
+    *,
+    base_url: str = "https://api.openai.com/v1",
+    model: str = "gpt-4o-mini",
+) -> LLMConfig:
+    key = api_key.strip()
+    if not key:
+        raise RuntimeError("请填写 API Key")
+    url = base_url.strip() or "https://api.openai.com/v1"
+    name = model.strip() or "gpt-4o-mini"
+    return LLMConfig(api_key=key, base_url=url, model=name)
+
+
 def load_llm_config() -> LLMConfig:
+    """Load LLM config from environment (CLI only)."""
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
-        raise RuntimeError("未设置 OPENAI_API_KEY，请在 .env 中配置 API Key")
-    return LLMConfig(
-        api_key=api_key,
-        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").strip(),
-        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip(),
+        raise RuntimeError("未设置 OPENAI_API_KEY，CLI 模式请在环境变量中配置")
+    return make_llm_config(
+        api_key,
+        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     )
 
 

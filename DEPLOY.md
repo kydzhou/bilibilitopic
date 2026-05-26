@@ -5,7 +5,7 @@
 1. **Docker 部署（推荐）**：步骤少、易升级
 2. **Python + systemd + Nginx**：不依赖 Docker
 
-部署前请先在 GitHub 创建空仓库 `kydzhou/bilibilitopic`，并准备好 LLM 的 `OPENAI_API_KEY`。
+部署前请先在 GitHub 拉取代码。LLM API Key 在 Web 页面填写，保存在浏览器本地，无需在服务器 `.env` 中配置。
 
 ---
 
@@ -61,21 +61,6 @@ cd /opt/bilibilitopic
 git clone https://github.com/kydzhou/bilibilitopic.git .
 ```
 
-### 3. 配置环境变量
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-至少填写：
-
-```env
-OPENAI_API_KEY=你的key
-OPENAI_BASE_URL=https://api.deepseek.com/v1
-OPENAI_MODEL=deepseek-chat
-```
-
 ### 4. 启动
 
 ```bash
@@ -84,7 +69,7 @@ docker compose ps
 docker compose logs -f
 ```
 
-此时可通过 `http://ECS公网IP:8000` 访问。
+此时可通过 `http://ECS公网IP:8000` 访问。首次打开页面时，在顶部填写 LLM 配置（API Key / Base URL / 模型），会自动保存到浏览器本地。
 
 ### 5.（推荐）Nginx 反代到 80 端口
 
@@ -128,9 +113,6 @@ git clone https://github.com/kydzhou/bilibilitopic.git .
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-
-cp .env.example .env
-nano .env
 ```
 
 ### 3. 配置 systemd 服务
@@ -188,7 +170,7 @@ curl http://127.0.0.1:8000/api/health
 curl http://127.0.0.1:8000/api/trending?limit=3
 ```
 
-正常返回 JSON 即表示 B 站接口可用；`llm` 字段为 `ok` 表示 API Key 配置正确。
+正常返回 JSON 即表示 B 站接口可用。LLM 需在 Web 页面填写 API Key 后测试分析功能。
 
 ---
 
@@ -198,9 +180,9 @@ curl http://127.0.0.1:8000/api/trending?limit=3
 
 LLM 生成报告通常需要 20–60 秒。Nginx 已设置 `proxy_read_timeout 300s`；若仍超时，检查 ECS 出网是否正常、LLM API 是否可达。
 
-### 2. `OPENAI_API_KEY` 未设置
+### 2. 分析提示 API Key 未填写
 
-确认 `/opt/bilibilitopic/.env` 存在且已被 Docker Compose 或 systemd 加载。
+在 Web 页面顶部的「LLM 配置」中填写 API Key。配置保存在浏览器本地，换浏览器或清除缓存后需重新填写。
 
 ### 3. B 站接口失败
 
@@ -219,7 +201,6 @@ LLM 生成报告通常需要 20–60 秒。Nginx 已设置 `proxy_read_timeout 3
 ```bash
 cd /opt/bilibilitopic
 git clone https://github.com/kydzhou/bilibilitopic.git .   # 首次
-cp .env.example .env && nano .env
 docker compose up -d --build
 ```
 

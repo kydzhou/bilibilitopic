@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>B站话题分析</title>
-  <link rel="stylesheet" href="/static/app.css" />
+  <meta name="base-path" content="{{ base_path }}" />
+  <link rel="stylesheet" href="{{ base_path }}/static/app.css" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -21,6 +22,25 @@
     <main class="layout">
       <section class="panel form-panel">
         <form id="analyze-form">
+          <details class="llm-panel" id="llm-panel" open>
+            <summary>LLM 配置 <span class="hint">（保存在浏览器本地）</span></summary>
+            <div class="llm-fields">
+              <label class="field">
+                <span>API Key</span>
+                <input id="llm-api-key" name="llm_api_key" type="password" placeholder="sk-..." autocomplete="off" required />
+              </label>
+              <label class="field">
+                <span>Base URL</span>
+                <input id="llm-base-url" name="llm_base_url" type="url" value="https://api.openai.com/v1" placeholder="https://api.deepseek.com/v1" required />
+              </label>
+              <label class="field">
+                <span>模型</span>
+                <input id="llm-model" name="llm_model" type="text" value="gpt-4o-mini" placeholder="deepseek-chat" required />
+              </label>
+              <p class="field-hint">Key 仅保存在本机浏览器，不会写入服务器配置文件。</p>
+            </div>
+          </details>
+
           <label class="field">
             <span>关键词</span>
             <input id="keyword" name="keyword" type="text" placeholder="例如：AI绘画、原神、考研" required />
@@ -91,6 +111,7 @@
     </section>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script>window.BASE_PATH = {{ base_path|tojson }};</script>
+  <script src="{{ base_path }}/static/app.js"></script>
 </body>
 </html>

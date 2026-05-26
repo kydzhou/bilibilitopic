@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 
 from analyzer.bilibili import BilibiliClient, VideoItem, format_videos_for_llm
-from analyzer.llm import analyze_topic
+from analyzer.llm import LLMConfig, analyze_topic
 
 
 @dataclass
@@ -16,6 +16,7 @@ class AnalysisRequest:
     limit: int = 25
     order: str = "pubdate"
     include_hot: bool = True
+    llm_config: LLMConfig | None = None
 
 
 @dataclass
@@ -85,6 +86,7 @@ def run_analysis(request: AnalysisRequest) -> AnalysisResult:
         videos_text,
         days=request.days,
         hot_keywords=hot_keywords if request.include_hot else None,
+        config=request.llm_config,
     )
 
     return AnalysisResult(

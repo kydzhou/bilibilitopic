@@ -1,3 +1,10 @@
+const BASE_PATH = window.BASE_PATH || "";
+const STORAGE_KEY = "bilibilitopic_llm_config";
+
+function apiUrl(path) {
+  return `${BASE_PATH}${path}`;
+}
+
 const form = document.getElementById("analyze-form");
 const statusBox = document.getElementById("status");
 const statusText = document.getElementById("status-text");
@@ -11,11 +18,66 @@ const videoCount = document.getElementById("video-count");
 const trendingList = document.getElementById("trending-list");
 const refreshTrendingBtn = document.getElementById("refresh-trending");
 const keywordInput = document.getElementById("keyword");
+const llmApiKeyInput = document.getElementById("llm-api-key");
+const llmBaseUrlInput = document.getElementById("llm-base-url");
+const llmModelInput = document.getElementById("llm-model");
+
+const DEFAULT_LLM = {
+  api_key: "",
+  base_url: "https://api.openai.com/v1",
+  model: "gpt-4o-mini",
+};
+
+function loadLlmConfig() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return { ...DEFAULT_LLM };
+    }
+    const parsed = JSON.parse(raw);
+    return {
+      api_key: parsed.api_key || "",
+      base_url: parsed.base_url || DEFAULT_LLM.base_url,
+      model: parsed.model || DEFAULT_LLM.model,
+    };
+  } catch {
+    return { ...DEFAULT_LLM };
+  }
+}
+
+function saveLlmConfig() {
+  const config = {
+    api_key: llmApiKeyInput.value.trim(),
+    base_url: llmBaseUrlInput.value.trim() || DEFAULT_LLM.base_url,
+    model: llmModelInput.value.trim() || DEFAULT_LLM.model,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+  return config;
+}
+
+function applyLlmConfig(config) {
+  llmApiKeyInput.value = config.api_key || "";
+  llmBaseUrlInput.value = config.base_url || DEFAULT_LLM.base_url;
+  llmModelInput.value = config.model || DEFAULT_LLM.model;
+}
+
+function getLlmPayload() {
+  const config = saveLlmConfig();
+  if (!config.api_key) {
+    throw new Error("请先填写 LLM API Key");
+  }
+  return config;
+}
+
+[llmApiKeyInput, llmBaseUrlInput, llmModelInput].forEach((input) => {
+  input.addEventListener("input", saveLlmConfig);
+  input.addEventListener("change", saveLlmConfig);
+});
 
 async function loadTrending() {
   trendingList.innerHTML = '<li class="muted">加载中...</li>';
   try {
-    const response = await fetch("/api/trending?limit=15");
+    const response = await fetch(apiUrl("/api/trending?limit=15"));
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.detail || "加载失败");
@@ -45,12 +107,24 @@ async function loadTrending() {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+
+  let llm;
+  try {
+    llm = getLlmPayload();
+  } catch (error) {
+    alert(error.message);
+    document.getElementById("llm-panel").open = true;
+    llmApiKeyInput.focus();
+    return;
+  }
+
   const payload = {
     keyword: keywordInput.value.trim(),
     days: Number(document.getElementById("days").value),
     limit: Number(document.getElementById("limit").value),
     order: document.getElementById("order").value,
     include_hot: document.getElementById("include_hot").checked,
+    llm,
   };
 
   if (!payload.keyword) {
@@ -62,7 +136,7 @@ form.addEventListener("submit", async (event) => {
 
   try {
     setLoading(true, "正在调用 LLM 生成报告，请稍候...");
-    const response = await fetch("/api/analyze", {
+    const response = await fetch(apiUrl("/api/analyze"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -128,5 +202,6 @@ function escapeAttr(value) {
   return escapeHtml(value).replaceAll("`", "&#96;");
 }
 
+applyLlmConfig(loadLlmConfig());
 refreshTrendingBtn.addEventListener("click", loadTrending);
 loadTrending();

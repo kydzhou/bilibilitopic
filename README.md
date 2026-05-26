@@ -9,7 +9,7 @@
 - Web 界面：输入关键词、调整参数、查看报告与视频样本
 - 侧边栏展示 B 站当前热搜，点击可填入关键词
 - 保留 CLI 命令行模式
-- 支持 OpenAI / DeepSeek / 通义等 OpenAI 兼容 API
+- 支持 OpenAI / DeepSeek / 通义等 OpenAI 兼容 API（在页面填写，保存在浏览器本地）
 
 ## 本地运行（Web）
 
@@ -22,33 +22,38 @@ source .venv/bin/activate          # Linux/macOS
 # .venv\Scripts\activate           # Windows
 
 pip install -r requirements.txt
-cp .env.example .env               # 填入 OPENAI_API_KEY
 
 uvicorn web.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-浏览器打开：http://127.0.0.1:8000
+浏览器打开：http://127.0.0.1:8000 ，在页面顶部填写 LLM 配置（API Key / Base URL / 模型），会自动保存到浏览器本地缓存。
 
-## 环境变量
+## LLM 配置
+
+Web 版在页面手动填写，保存在浏览器 `localStorage`，不会写入服务器 `.env`。
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| API Key | 你的 LLM 密钥 | `sk-xxx` |
+| Base URL | OpenAI 兼容接口地址 | `https://api.deepseek.com/v1` |
+| 模型 | 模型名称 | `deepseek-chat` |
+
+## 服务环境变量（可选）
 
 ```env
-OPENAI_API_KEY=sk-xxx
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4o-mini
 HOST=0.0.0.0
 PORT=8000
 ```
 
-DeepSeek 示例：
-
-```env
-OPENAI_BASE_URL=https://api.deepseek.com/v1
-OPENAI_MODEL=deepseek-chat
-```
-
 ## CLI 模式（可选）
 
+CLI 仍可通过环境变量配置 LLM：
+
 ```bash
+export OPENAI_API_KEY=sk-xxx
+export OPENAI_BASE_URL=https://api.deepseek.com/v1
+export OPENAI_MODEL=deepseek-chat
+
 python main.py analyze "AI绘画"
 python main.py trending
 python main.py check
@@ -57,7 +62,6 @@ python main.py check
 ## Docker 运行
 
 ```bash
-cp .env.example .env
 docker compose up -d --build
 ```
 
